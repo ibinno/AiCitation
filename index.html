@@ -1,0 +1,228 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>AI 출처 표기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one screen. Left, a form with chip choices for the AI; right, three citation cards styled like reference-list entries (hanging indent) that update live. Tokens come from the Wordvice design system. */
+:root{
+  --bg:#f7f9fc; --surface:#ffffff; --fg:#141414; --muted:#555555; --faint:#777777;
+  --line:#e4e4e4; --line-input:#c5c5c5; --brand:#003170; --accent:#0567e6; --accent-hover:#067cff;
+  --accent-soft:#d6e6ff; --on-accent:#ffffff; --ok:#0a7a4b;
+  --shadow:0 2px 3px rgba(0,0,0,.04),0 5px 18px rgba(0,0,0,.06);
+  --font-ui:"Pretendard Variable",Pretendard,"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --ease:cubic-bezier(0.4,0,0.2,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1220; --surface:#131b2e; --fg:#eef2f9; --muted:#b4bdd0; --faint:#8993aa;
+  --line:#26314b; --line-input:#3a4766; --brand:#7fb2ff; --accent:#4d90ff; --accent-hover:#7fb2ff;
+  --accent-soft:#1c2c4d; --on-accent:#0c1220; --ok:#5fd19b; --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1220; --surface:#131b2e; --fg:#eef2f9; --muted:#b4bdd0; --faint:#8993aa;
+  --line:#26314b; --line-input:#3a4766; --brand:#7fb2ff; --accent:#4d90ff; --accent-hover:#7fb2ff;
+  --accent-soft:#1c2c4d; --on-accent:#0c1220; --ok:#5fd19b; --shadow:none; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:16px;line-height:1.6;margin:0;
+  padding-block:48px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.page{max-width:1080px;margin:0 auto}
+header{margin-bottom:32px}
+.kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+h1{font-size:40px;line-height:1.2;margin:8px 0 10px;color:var(--brand);font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;max-width:56ch;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;box-shadow:var(--shadow);min-width:0}
+.field{margin-bottom:24px;min-width:0}
+.field:last-child{margin-bottom:0}
+label,.lab{display:block;font-size:14px;font-weight:600;margin-bottom:8px}
+.hint{font-size:12px;color:var(--faint);font-weight:400;margin-left:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;border:0;padding:0;margin:0}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chip span{display:block;padding:8px 14px;border:1px solid var(--line-input);border-radius:8px;font-size:14px;font-weight:500;background:var(--surface);color:var(--fg);transition:background-color .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease)}
+.chip:hover span{border-color:var(--accent);color:var(--accent)}
+.chip input:checked + span{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.chip input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+.fld{width:100%;font:400 14px/1.4 var(--font-ui);padding:10px 16px;border:1px solid var(--line-input);border-radius:8px;background:var(--surface);color:var(--fg);transition:box-shadow .15s var(--ease),border-color .15s var(--ease)}
+.fld::placeholder{color:#8f8f8f}
+.fld:focus{outline:none;border-color:var(--accent);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.fld:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.other{display:none;margin-top:12px;padding:16px;border:1px dashed var(--line-input);border-radius:8px;gap:12px;flex-direction:column}
+.other.on{display:flex}
+.org-note{font-size:12px;color:var(--faint);margin-top:6px}
+.cards{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:var(--shadow);min-width:0}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.fmt{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.cite{padding-left:2em;text-indent:-2em;font-size:15px;line-height:1.7;overflow-wrap:anywhere;margin:0}
+.cite i{font-style:italic}
+.btn{font:600 14px/1.4 var(--font-ui);padding:8px 14px;border-radius:8px;border:1px solid transparent;cursor:pointer;background:var(--accent);color:var(--on-accent);transition:background-color .15s var(--ease),opacity .15s var(--ease);flex:none}
+.btn:hover{background:var(--accent-hover)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.done{background:var(--ok);color:#fff}
+.btn-outline{background:var(--surface);color:var(--fg);border-color:var(--line-input)}
+.btn-outline:hover{background:var(--surface);border-color:var(--accent);color:var(--accent)}
+.note{font-size:12px;color:var(--faint);margin:10px 0 0}
+.warn{color:#b42318;font-size:12px;margin-top:6px;min-height:0}
+:root[data-theme="dark"] .warn{color:#ff8a80}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .warn{color:#ff8a80}}
+.all{display:flex;justify-content:flex-end;margin-bottom:-4px}
+@media (max-width:860px){
+  body{padding-block:32px 64px}
+  h1{font-size:32px}
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .two{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="page">
+<header>
+  <h1>AI 출처 표기</h1>
+</header>
+
+<div class="grid">
+  <form class="panel" id="form" autocomplete="off" novalidate>
+    <div class="field">
+      <span class="lab" id="ai-label">사용한 AI</span>
+      <fieldset class="chips" id="ai-chips" aria-labelledby="ai-label"></fieldset>
+      <div class="other" id="other-box">
+        <div>
+          <label for="other-name">AI 이름</label>
+          <input class="fld" id="other-name" type="text" placeholder="예: 서비스 이름">
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="org">제작 기관 <span class="hint" id="org-hint"></span></label>
+      <input class="fld" id="org" type="text" placeholder="예: 서비스를 만든 회사">
+    </div>
+    <div class="field two">
+      <div>
+        <label for="version">버전 <span class="hint">선택</span></label>
+        <input class="fld" id="version" type="text" placeholder="예: GPT-4.1(기본), GPT-5">
+      </div>
+      <div>
+        <label for="date">사용한 날짜</label>
+        <input class="fld" id="date" type="date">
+      </div>
+    </div>
+    <div class="field">
+      <label for="url">URL</label>
+      <input class="fld" id="url" type="url" inputmode="url" placeholder="https://">
+      <div class="warn" id="url-warn" role="status"></div>
+    </div>
+  </form>
+
+  <div class="cards" aria-live="polite">
+    <div class="all"><button class="btn btn-outline" type="button" id="copy-all">세 가지 모두 복사</button></div>
+    <div class="card"><div class="card-top"><span class="fmt">APA 7</span><button class="btn" type="button" data-copy="apa">복사</button></div><p class="cite" id="out-apa"></p></div>
+    <div class="card"><div class="card-top"><span class="fmt">MLA 9</span><button class="btn" type="button" data-copy="mla">복사</button></div><p class="cite" id="out-mla"></p></div>
+    <div class="card"><div class="card-top"><span class="fmt">Chicago (각주)</span><button class="btn" type="button" data-copy="chi">복사</button></div><p class="cite" id="out-chi"></p><p class="note">Chicago는 본문 각주나 미주에 쓰는 형식입니다.</p></div>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  var AIS=[
+    {id:'chatgpt',name:'ChatGPT',org:'OpenAI',url:'https://chatgpt.com'},
+    {id:'claude',name:'Claude',org:'Anthropic',url:'https://claude.ai'},
+    {id:'gemini',name:'Gemini',org:'Google',url:'https://gemini.google.com'},
+    {id:'copilot',name:'Copilot',org:'Microsoft',url:'https://copilot.microsoft.com'},
+    {id:'perplexity',name:'Perplexity',org:'Perplexity AI',url:'https://www.perplexity.ai'},
+    {id:'grok',name:'Grok',org:'xAI',url:'https://grok.com'},
+    {id:'metaai',name:'Meta AI',org:'Meta',url:'https://www.meta.ai'},
+    {id:'deepseek',name:'DeepSeek',org:'DeepSeek',url:'https://chat.deepseek.com'},
+    {id:'lechat',name:'Le Chat',org:'Mistral AI',url:'https://chat.mistral.ai'},
+    {id:'clova',name:'CLOVA X',org:'NAVER',url:'https://clova-x.naver.com'},
+    {id:'other',name:'',org:'',url:''}
+  ];
+  var MLA_MON=['Jan.','Feb.','Mar.','Apr.','May','June','July','Aug.','Sept.','Oct.','Nov.','Dec.'];
+  var FULL_MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var $=function(id){return document.getElementById(id)};
+  var chips=$('ai-chips'),otherBox=$('other-box'),otherName=$('other-name'),org=$('org'),version=$('version'),date=$('date'),url=$('url'),warn=$('url-warn');
+  var selected='chatgpt';
+  var last={apa:'',mla:'',chi:'',apaHtml:'',mlaHtml:'',chiHtml:''};
+
+  AIS.forEach(function(a){
+    var l=document.createElement('label');l.className='chip';
+    var i=document.createElement('input');i.type='radio';i.name='ai';i.value=a.id;i.id='ai-'+a.id;if(a.id===selected)i.checked=true;
+    var s=document.createElement('span');s.textContent=a.id==='other'?'기타':a.name;
+    l.appendChild(i);l.appendChild(s);chips.appendChild(l);
+  });
+
+  function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  date.value=today();
+
+  function current(){return AIS.filter(function(a){return a.id===selected})[0]}
+  function apply(){
+    var a=current();
+    var isOther=a.id==='other';
+    otherBox.classList.toggle('on',isOther);
+    if(!isOther){org.value=a.org;url.value=a.url;}
+    else{org.value='';url.value='';}
+    $('org-hint').textContent=isOther?'':'';
+    render();
+  }
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  function render(){
+    var a=current();
+    var name=(a.id==='other'?otherName.value.trim():a.name)||'AI 이름';
+    var o=org.value.trim()||'제작 기관';
+    var v=version.value.trim();
+    var u=url.value.trim();
+    var p=(date.value||today()).split('-');
+    var y=p[0],m=parseInt(p[1],10)-1,d=parseInt(p[2],10);
+    var uOk=!u||/^https?:\/\/\S+\.\S+/i.test(u);
+    warn.textContent=uOk?'':'주소가 https:// 로 시작하는지 확인해 주세요.';
+    var tailU=u?(' '+u):'';
+    var vp=v?(' ('+v+')'):'';
+    var vc=v?(', '+v):'';
+    // each entry: [plain, html]
+    var apa=[o+'. ('+y+'). '+name+vp+' [Large language model].'+tailU,
+             esc(o)+'. ('+y+'). <i>'+esc(name)+'</i>'+esc(vp)+' [Large language model].'+esc(tailU)];
+    var mlaDate=d+' '+MLA_MON[m]+' '+y;
+    var mla=[name+vc+', '+o+', '+mlaDate+(u?', '+u+'.':'.'),
+             '<i>'+esc(name)+'</i>'+esc(vc)+', '+esc(o)+', '+mlaDate+esc(u?', '+u+'.':'.')];
+    var chiDate=FULL_MON[m]+' '+d+', '+y;
+    var chi=[o+', '+name+vc+', large language model, '+chiDate+(u?', '+u+'.':'.'),
+             esc(o)+', <i>'+esc(name)+'</i>'+esc(vc)+', large language model, '+chiDate+esc(u?', '+u+'.':'.')];
+    $('out-apa').innerHTML=apa[1];$('out-mla').innerHTML=mla[1];$('out-chi').innerHTML=chi[1];
+    last={apa:apa[0],mla:mla[0],chi:chi[0],apaHtml:apa[1],mlaHtml:mla[1],chiHtml:chi[1]};
+  }
+
+  chips.addEventListener('change',function(e){if(e.target.name==='ai'){selected=e.target.value;apply();}});
+  [otherName,org,version,date,url].forEach(function(el){el.addEventListener('input',render)});
+  $('form').addEventListener('submit',function(e){e.preventDefault()});
+
+  function selectText(node){
+    var r=document.createRange();r.selectNodeContents(node);var s=window.getSelection();s.removeAllRanges();s.addRange(r);
+  }
+  function copy(plain,html,btn,srcNode){
+    function ok(){var t=btn.textContent;btn.textContent='복사됨';btn.classList.add('done');setTimeout(function(){btn.textContent=btn.dataset.label;btn.classList.remove('done');},1500);}
+    function fail(){if(srcNode)selectText(srcNode);var t=btn.textContent;btn.textContent='직접 복사: Ctrl/Cmd+C';setTimeout(function(){btn.textContent=btn.dataset.label;},2500);}
+    function plainOnly(){try{navigator.clipboard.writeText(plain).then(ok,fail)}catch(e){fail()}}
+    try{
+      if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
+        var item=new ClipboardItem({'text/plain':new Blob([plain],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})});
+        navigator.clipboard.write([item]).then(ok,plainOnly);
+      }else plainOnly();
+    }catch(e){plainOnly()}
+  }
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    b.dataset.label=b.textContent;
+    b.addEventListener('click',function(){var k=b.dataset.copy;copy(last[k],'<p>'+last[k+'Html']+'</p>',b,$('out-'+k));});
+  });
+  var all=$('copy-all');all.dataset.label=all.textContent;
+  all.addEventListener('click',function(){
+    var plain='APA 7\n'+last.apa+'\n\nMLA 9\n'+last.mla+'\n\nChicago\n'+last.chi;
+    var html='<p><b>APA 7</b><br>'+last.apaHtml+'</p><p><b>MLA 9</b><br>'+last.mlaHtml+'</p><p><b>Chicago</b><br>'+last.chiHtml+'</p>';
+    copy(plain,html,all,null);
+  });
+
+  apply();
+})();
+</script>
+
+</body></html>
